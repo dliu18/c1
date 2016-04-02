@@ -39,7 +39,29 @@ def addCustomer():
 
 	return response.json()["objectCreated"]["_id"];
 
-print numberOfCustomers();
+def addMerchant():
+
+	merchantData = {
+	  "name": "string",
+	  "category": "string",
+	  "address": {
+	    "street_number": "string",
+	    "street_name": "string",
+	    "city": "string",
+	    "state": "string",
+	    "zip": "string"
+	  },
+	  "geocode": {
+	    "lat": 0,
+	    "lng": 0
+	  }
+	}
+
+	response = requests.post(
+		url,
+		data=json.dumps(merchantData),
+		headers={'content-type':'application/json'},
+		)
 
 
 # print response.json()["_id"];
