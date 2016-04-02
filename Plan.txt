@@ -1,0 +1,41 @@
+customer:
+- name
+- set of topics [integers 1-n], dictionary {"type" : probability}
+
+topics:
+- topic number
+- dictionary {"merchant" : probability} 
+
+merchant
+- merchant name
+- topic
+
+array of total purchases (money spent)
+
+
+
+
+
+Generate Data
+1. clear all customers
+2. addCustomer:
+	- remembering their topic distribution
+3. addMerchant
+	- what topic it is (a number [1,n])
+4. addPurchase
+5. keep track of topics
+6. have m merchants per topic
+	give each topic a distribution over merchant
+
+Variables
+	topics - dictionary (merchant - probability)
+	customers - dictionary (merchants - probability)
+	merchants - topic it's assigned
+	how many merchants per topic
+
+Quantifying variables
+	t  = # of topics
+	c  = # of customers
+	m  = # of merchants
+	mt = # of merchants per topic
+
