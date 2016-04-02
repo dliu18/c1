@@ -63,6 +63,24 @@ def addMerchant():
 		headers={'content-type':'application/json'},
 		)
 
+def addPurchase(customer, merchant):
+	purchaseData = {
+	  "merchant_id": merchant,
+	  "medium": "balance",
+	  "purchase_date": "2016-04-02",
+	  "amount": 0,
+	  "status": "pending",
+	  "description": "purchase"
+	}
+
+	response = requests.post(
+		url,
+		data=json.dumps(purchaseData),
+		headers={'content-type':'application/json'},
+		)
+
+
+
 
 # print response.json()["_id"];
 # Get merchants
