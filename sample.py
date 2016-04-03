@@ -21,6 +21,7 @@ while True:
 		break;
 
 	for item in results:
+		list = 
 		geocodes.append(item["geocode"])
 
 	page += 1

@@ -1,0 +1,128 @@
+body {
+    font-family: 'Roboto', 'Helvetica', sans-serif;
+    font-weight: 300;
+    background-color: #333;
+    color: #fff;
+}
+
+b {
+    font-weight: 900;
+}
+
+.outline {
+    fill: none;
+    stroke: #888888;
+    stroke-width: 1px;
+}
+
+#tooltip {
+    font-size: 10pt;
+    font-weight: 900;
+
+    fill: #ffffff;
+    stroke: #ffffff;
+    stroke-width: 0.25px;
+}
+
+.node {
+    stroke: #ffffff;
+    stroke-weight: 1px;
+}
+
+.link {
+    fill: none;
+    stroke: #888888;
+    stroke-weight: 1px;
+    stroke-opacity: 0.5;
+}
+
+.highlight {
+    stroke: red;
+    stroke-weight: 4px;
+    stroke-opacity: 1.0;
+}
+
+/* ui stuff  */
+h1 {
+    float:right;
+    font-weight: 100;
+    letter-spacing: 2px;
+    /*text-transform: uppercase;*/
+}
+
+h2 {
+    margin-bottom: 0;
+}
+
+h3 {
+    font-weight: 500;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+a, a:hover, a:active, a:visited {
+    color: #3ff;
+    text-decoration: none;
+}
+
+a:hover {
+    font-weight: bold;
+}
+
+.container {
+    padding: 0 5%;
+}
+
+.container .column {
+    display: inline-block;
+    margin-right: 20px
+}
+
+.container .randomize {
+    font-size: 0.7em;
+}
+
+.container #current {
+    display: inline-block;
+}
+
+select {
+    outline: none;
+    color: #fff;
+    background-color: transparent;
+    padding: 5px 35px 5px 5px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    height: 34px;
+} 
+
+button {
+    display: inline-block;
+    outline: none;
+    color: #3ff;
+    background-color: transparent;
+    padding: 5px;
+    margin-left: 15px;
+    font-size: 0.7em;
+    border: 1px solid #3ff;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    font-weight: bold;
+}
+
+ul {
+    list-style: none;
+}
+
+li {
+    display: inline-block;
+    margin-right: 15px;
+}
+
+li:before {
+    content: "⬤";
+    padding-right:7px;
+}

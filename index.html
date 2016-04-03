@@ -1,0 +1,359 @@
+<!-- python -m SimpleHTTPServer 8080 //-->
+<!-- TODO: Convert reusable chart approach. 
+    http://bl.ocks.org/enjoylife/4e435d329c2c743da33e//-->
+
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<title>NessieVIS</title>
+
+<!-- JavaScript Libraries //-->
+<script src="http://d3js.org/d3.v3.min.js"></script>
+
+<!-- CSS Style //-->
+<link href='https://fonts.googleapis.com/css?family=Lato|Roboto:300,100,700,500' rel='stylesheet' type='text/css'>
+<link href="style.css" rel="stylesheet" type="text/css">
+
+
+<script>
+/* GLOBALS */
+
+var width  = 960;           // width of svg image
+var height = 800;           // height of svg image
+var margin = 40;            // amount of margin around plot area
+var pad = margin / 2;       // actual padding amount
+var radius = 20;             // fixed node radius
+var yfixed = pad + radius;  // y position for all nodes
+var cutoffNumber = 20; // CUTOFF
+var data;
+
+var topics = {};
+
+/* HELPER FUNCTIONS */
+
+// Generates a tooltip for a SVG circle element based on its ID
+function addTooltip(circle) {
+    var x = parseFloat(circle.attr("cx"));
+    var y = parseFloat(circle.attr("cy"));
+    var r = parseFloat(circle.attr("r"));
+    var text = circle.attr("id");
+
+    var tooltip = d3.select("#plot")
+        .append("text")
+        .text(text)
+        .attr("x", x)
+        .attr("y", y)
+        .attr("dy", -r * 2)
+        .attr("id", "tooltip");
+
+    var offset = tooltip.node().getBBox().width / 2;
+
+    if ((x - offset) < 0) {
+        tooltip.attr("text-anchor", "start");
+        tooltip.attr("dx", -r);
+    }
+    else if ((x + offset) > (width - margin)) {
+        tooltip.attr("text-anchor", "end");
+        tooltip.attr("dx", r);
+    }
+    else {
+        tooltip.attr("text-anchor", "middle");
+        tooltip.attr("dx", 0);
+    }
+}
+
+/* MAIN DRAW METHOD */
+var selectedId = null;
+var hasPopulatedSelects = false;
+
+// Draws an arc diagram for the provided undirected graph
+function arcDiagram(data) {
+    this.data = data;
+    // delete old svg (lol)
+    d3.select("svg").remove();
+    // create svg image
+    var svg  = d3.select(".container")
+        .append("svg")
+        .attr("id", "arc")
+        .attr("width", width)
+        .attr("height", height);
+
+    // create plot area within svg image
+    var plot = svg.append("g")
+        .attr("id", "plot")
+        .attr("transform", "translate(" + pad + ", " + pad + ")");
+
+    // fix graph links to map to objects instead of indices
+    var links = [];
+    var customers = [];
+    var merchants = [];
+    for (var merchantId in data.merchant) {
+        var topic = data.merchant[merchantId].split(/\s+/g)[0];
+        topics[topic] = true;
+    }
+    topics = Object.keys(topics);
+    if (!selectedId) {
+        selectedId = Object.keys(data.main)[0];
+    }
+    // is customer id
+    if (Object.keys(data.customers).indexOf(selectedId) >= 0) {
+        var customerId = selectedId;
+        var customer = {
+            "name": data.customers[customerId],
+            "id": customerId,
+            "group": 1
+        };
+        document.getElementById('current').innerHTML = customer.name;
+        document.getElementById('related').style.visibility = "hidden";
+        customers.push(customer);
+        for (var merchantId in data.main[customerId]) {
+            if (merchants.length > cutoffNumber - 1) {
+                break;
+            }
+            var merchant = {
+                "name": data.merchant[merchantId],
+                "id": merchantId,
+                "group": topics.indexOf(data.merchant[merchantId].split(/\s+/g)[0]) + 2
+            };
+            merchants.push(merchant);
+            links.push({
+                "source": customer,
+                "target": merchant,
+                "width": data.main[customerId][merchantId]
+            });
+        }
+    }
+    // is merchant id
+    else if (Object.keys(data.merchant).indexOf(selectedId) >= 0) {
+        var merchantId = selectedId;
+        var merchant = {
+            "name": data.merchant[merchantId],
+            "id": merchantId,
+            "group": topics.indexOf(data.merchant[merchantId].split("\s+")[0]) + 2
+        };
+        document.getElementById('current').innerHTML = merchant.name;
+        document.getElementById('related').style.visibility = "visible";
+        merchants.push(merchant);
+        for (var customerId in data.main[merchantId]) {
+            if (customers.length > cutoffNumber - 1) {
+                break;
+            }
+            var customer = {
+                "name": data.customers[customerId],
+                "id": customerId,
+                "group": 2
+            };
+            customers.push(customer);
+            links.push({
+                "source": merchant,
+                "target": customer,
+                "width": data.main[merchantId][customerId]
+            });
+        }
+    }
+
+    // must be done AFTER links are fixed
+    linearLayout(merchants.concat(customers));
+
+    // draw links first, so nodes appear on top
+    drawLinks(links);
+
+    // draw nodes last
+    drawNodes(merchants.concat(customers));
+
+    // populate html selects if not already
+    populateSelects(data);
+}
+
+// populate html select tags
+function populateSelects(data) {
+    if (hasPopulatedSelects) return;
+    var customerSelect = document.getElementById("customers");
+    for (var customerId in data.customers) {
+       var opt = document.createElement("option");
+       opt.value = customerId;
+       opt.innerHTML = data.customers[customerId];
+       customerSelect.appendChild(opt);
+    }
+    var merchantSelect = document.getElementById("merchant");
+    index = 0;
+    for (var merchantId in data.merchant) {
+       var opt = document.createElement("option");
+       opt.value = merchantId;
+       opt.innerHTML = data.merchant[merchantId];
+       merchantSelect.appendChild(opt);
+    }
+    hasPopulatedSelects = true;
+}
+
+function selectChanged(elem, value) {
+    var arr = document.getElementsByTagName('select');
+    for (var i = 0; i < arr.length; i++) {
+        arr[i].style.border = "1px solid #ccc";
+    }
+    elem.style.border = "1px solid #3ff";
+    selectedId = value;
+    arcDiagram(data);
+}
+
+function randomize(value) {
+    var arr = Object.keys(data[value]);
+    var idx = Math.floor(Math.random() * arr.length);
+    var elem = document.getElementById(value);
+    elem.value = arr[idx];
+    selectChanged(elem, arr[idx]);
+}
+
+function relatedMerchants() {
+    if (Object.keys(data.merchant).indexOf(selectedId) < 0) {
+        console.log('u dun goofd');
+        return;
+    }
+    //
+    var color = d3.scale.category20();
+    var elem = document.getElementById('relatedList');
+    while (elem.firstChild) {
+        elem.removeChild(elem.firstChild);
+    }
+
+    var name = data.merchant[selectedId];
+    var topic = name.split(/\s+/g)[0];
+
+    var count = 0;
+    for (var merchantId in data.merchant) {
+        if (count >= 5) break;
+        if (data.merchant[merchantId].startsWith(topic) || Math.random() < 0.1) {
+            var li = document.createElement("li");
+            li.innerHTML =  data.merchant[merchantId];
+            var cstr = color(topics.indexOf(data.merchant[merchantId].split(/\s+/g)[0]));
+            li.id = 'id'+cstr.substring(1);
+            elem.appendChild(li);
+            console.log(topic);
+            document.styleSheets[0].addRule('li#'+li.id+'::before','color: '+cstr+';');
+            count++;
+        }
+    }
+    document.getElementById('related').remove();
+}
+
+// Layout nodes linearly, sorted by group
+function linearLayout(nodes) {
+    // sort nodes by group
+    nodes.sort(function(a, b) {
+        return a.group - b.group;
+    })
+
+    // used to scale node index to x position
+    var xscale = d3.scale.linear()
+        .domain([0, nodes.length - 1])
+        .range([radius, width - margin - radius]);
+
+    // calculate pixel location for each node
+    nodes.forEach(function(d, i) {
+        d.x = xscale(i);
+        d.y = yfixed;
+    });
+}
+
+// Draws nodes on plot
+function drawNodes(nodes) {
+    // used to assign nodes color by group
+    var color = d3.scale.category20();
+
+    d3.select("#plot").selectAll(".node")
+        .data(nodes)
+        .enter()
+        .append("circle")
+        .attr("class", "node")
+        .attr("id", function(d, i) { return d.name; })
+        .attr("cx", function(d, i) { return d.x; })
+        .attr("cy", function(d, i) { return d.y; })
+        .attr("r",  function(d, i) { return radius; })
+        .style("fill",   function(d, i) { return color(d.group); })
+        .on("mouseover", function(d, i) { addTooltip(d3.select(this)); })
+        .on("mouseout",  function(d, i) { d3.select("#tooltip").remove(); })
+        .on("click", function(d, i) {
+            selectedId = d.id;
+            arcDiagram(data);
+        });
+}
+
+// Draws nice arcs for each link on plot
+function drawLinks(links) {
+    // scale to generate radians (just for lower-half of circle)
+    var radians = d3.scale.linear()
+        .range([Math.PI / 2, 3 * Math.PI / 2]);
+
+    // path generator for arcs (uses polar coordinates)
+    var arc = d3.svg.line.radial()
+        .interpolate("basis")
+        .tension(0)
+        .angle(function(d) { return radians(d); });
+
+    // add links
+    d3.select("#plot").selectAll(".link")
+        .data(links)
+        .enter()
+        .append("path")
+        .attr("class", "link")
+        .attr("transform", function(d, i) {
+            // arc will always be drawn around (0, 0)
+            // shift so (0, 0) will be between source and target
+            var xshift = d.source.x + (d.target.x - d.source.x) / 2;
+            var yshift = yfixed;
+            return "translate(" + xshift + ", " + yshift + ")";
+        })
+        .attr("d", function(d, i) {
+            // get x distance between source and target
+            var xdist = Math.abs(d.source.x - d.target.x);
+
+            // set arc radius based on x distance
+            arc.radius(xdist / 2);
+
+            // want to generate 1/3 as many points per pixel in x direction
+            var points = d3.range(0, Math.ceil(xdist / 3));
+
+            // set radian scale domain
+            radians.domain([0, points.length - 1]);
+
+            // return path for arc
+            return arc(points);
+        })
+        .attr("stroke-width", function(d, i) {
+            return Math.sqrt(d.width);
+        });
+}
+</script>
+</head>
+
+<body>
+<script>
+d3.json("data.json", arcDiagram);
+</script>
+<div class="container">
+    <h1>NessieVIS</h1>
+    <div>
+        <div class="column">
+            <h3>Customers</h3>
+            <select id="customers" onchange="selectChanged(this, this.value)">
+            </select><br/>
+            <a href="#" class="randomize" onclick="randomize('customers')">Randomize</a>
+        </div>
+        <div class="column">
+            <h3>Merchants</h3>
+            <select id="merchant" onchange="selectChanged(this, this.value)">
+            </select><br/>
+            <a href="#" class="randomize" onclick="randomize('merchant')">Randomize</a>
+        </div>
+    </div>
+    <br/>
+
+    <hr>
+
+    <h2 id="current"></h2>
+    <button id="related" onclick="relatedMerchants()">Related Merchants</button>
+    <ul id="relatedList">
+    </ul>
+</div>
+</body>
+</html>

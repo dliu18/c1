@@ -1,14 +1,10 @@
-# This is written for PYTHON 3
-# Don't forget to install requests package
-
 import requests
 import json
 
 apiKey = '3a9ecf6c8c0154fa75bcce7f802a4398'
 
-url = 'http://api.reimaginebanking.com/customers?key={}'.format(apiKey);
-
 def numberOfCustomers():
+	url = 'http://api.reimaginebanking.com/customers?key={}'.format(apiKey);
 	response = requests.get(
 	url,
 	headers={'content-type':'application/json'},
@@ -18,7 +14,8 @@ def numberOfCustomers():
 	return len(customers);
 
 def addCustomer():
-
+	# add customer
+	url = 'http://api.reimaginebanking.com/customers?key={}'.format(apiKey);
 	customerData = {
 	  "first_name": "A",
 	  "last_name": "A",
@@ -37,25 +34,59 @@ def addCustomer():
 		headers={'content-type':'application/json'},
 		)
 
-	return response.json()["objectCreated"]["_id"];
+	customerId = response.json()["objectCreated"]["_id"];
+	url = 'http://api.reimaginebanking.com/customers/{}/accounts?key={}'.format(customerId, apiKey);
 
-def addMerchant():
-
-	merchantData = {
-	  "name": "string",
-	  "category": "string",
-	  "address": {
-	    "street_number": "string",
-	    "street_name": "string",
-	    "city": "string",
-	    "state": "string",
-	    "zip": "string"
-	  },
-	  "geocode": {
-	    "lat": 0,
-	    "lng": 0
-	  }
+	accountData = {
+		  "type": "Credit Card",
+		  "nickname": "A",
+		  "rewards": 0,
+		  "balance": 0
 	}
+
+	response = requests.post(
+		url,
+		data = json.dumps(accountData),
+		headers={'content-type':'application/json'}
+		)
+
+	return response.json()["objectCreated"]["_id"];
+def addMerchant(topic = None):
+
+	if topic is None:
+		merchantData = {
+		  "name": "A",
+		  "category": "A",
+		  "address": {
+		    "street_number": "1",
+		    "street_name": "Friend Center",
+		    "city": "Princeton",
+		    "state": "NJ",
+		    "zip": "08544"
+		  },
+		  "geocode": {
+		    "lat": 0,
+		    "lng": 0
+		  }
+		}
+	else:
+		merchantData = {
+		  "name": "A",
+		  "category": topic,
+		  "address": {
+		    "street_number": "1",
+		    "street_name": "Friend Center",
+		    "city": "Princeton",
+		    "state": "NJ",
+		    "zip": "08544"
+		  },
+		  "geocode": {
+		    "lat": 0,
+		    "lng": 0
+		  }
+		}
+
+	url = 'http://api.reimaginebanking.com/merchants?key={}'.format(apiKey);
 
 	response = requests.post(
 		url,
@@ -63,7 +94,18 @@ def addMerchant():
 		headers={'content-type':'application/json'},
 		)
 
+	return response.json()["objectCreated"]["_id"];
+def numberOfMerchants():
+	url = 'http://api.reimaginebanking.com/merchants?key={}'.format(apiKey);
+
+	response = requests.get(
+		url,
+		headers={'content-type':'application/json'},
+		)
+	merchants = response.json();
+	return len(merchants);
 def addPurchase(customer, merchant):
+	url = 'http://api.reimaginebanking.com/accounts/{}/purchases?key={}'.format(customer, apiKey);
 	purchaseData = {
 	  "merchant_id": merchant,
 	  "medium": "balance",
@@ -78,17 +120,14 @@ def addPurchase(customer, merchant):
 		data=json.dumps(purchaseData),
 		headers={'content-type':'application/json'},
 		)
+def numberOfPurchases(customer):
+	url = 'http://api.reimaginebanking.com/accounts/{}/purchases?key={}'.format(customer, apiKey);
+	response = requests.get(
+		url,
+		headers={'content-type':'application/json'},
+		)
+	purchases = response.json();
+	return len(purchases);
 
-
-
-
-# print response.json()["_id"];
-# Get merchants
-# url = 'http://api.reimaginebanking.com/enterprise/merchants?key={}'.format(apiKey);
-
-# response = requests.get(
-# 	url,
-# 	headers={'content-type':'application/json'},
-# 	)
-
-# result = response.json()["results"];
+print str(numberOfCustomers())
+print str(numberOfMerchants())
